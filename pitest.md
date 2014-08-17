@@ -4,7 +4,7 @@ PIT is a state of the art mutation testing system, providing gold
 standard test coverage for Java and the jvm. Its fast, scalable and
 integrates with modern test and build tooling.
 
-![osiam](pit.png)
+![PIT](.png)
 [Pitest](http://pitest.org)
 
 ---

@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<!--
+  Copyright 2010 Google Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+  Original slides: Marcin Wichary (mwichary@google.com)
+  Modifications: Ernest Delgado (ernestd@google.com)
+                 Alex Russell (slightlyoff@chromium.org)
+
+  landslide modifications: Adam Zapletal (adamzap@gmail.com)
+                           Nicolas Perriault (nperriault@gmail.com)
+-->
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Mutation tests with PIT (pitest)</title>
+    <!-- Styles -->
+    
+    <link rel="stylesheet" media="print" href="/usr/local/Cellar/python/2.7.6/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/landslide/themes/default/css/print.css">
+    <link rel="stylesheet" media="screen, projection" href="/usr/local/Cellar/python/2.7.6/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/landslide/themes/default/css/screen.css">
+    
+    
+    <!-- /Styles -->
+    <!-- Javascripts -->
+    
+    <script type="text/javascript" src="/usr/local/Cellar/python/2.7.6/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/landslide/themes/default/js/slides.js"></script>
+    
+    
+    <!-- /Javascripts -->
+</head>
+<body>
+  <div id="blank"></div>
+  <div class="presentation">
+    <div id="current_presenter_notes">
+      <div id="presenter_note"></div>
+    </div>
+    <div class="slides">
+      
+      <!-- slide source: pitest.md -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Mutation tests with PIT (pitest)</h1></header>
+            
+            
+            <section><p>PIT is a state of the art mutation testing system, providing gold
+standard test coverage for Java and the jvm. Its fast, scalable and
+integrates with modern test and build tooling.</p>
+<p><img alt="PIT" src=".png" />
+<a href="http://pitest.org">Pitest</a></p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="pitest.md">pitest.md</a>
+            </aside>
+            
+            <aside class="page_number">
+              1/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: pitest.md -->
+      <div class="slide-wrapper">
+        <div class="slide has_code">
+          <div class="inner">
+            
+            <header><h1>What's wrong here?</h1></header>
+            
+            
+            <section><div class="highlight"><pre><span class="lineno"> 1</span> <span class="kd">public</span> <span class="kd">static</span> <span class="n">String</span> <span class="nf">foo</span><span class="o">(</span><span class="kt">boolean</span> <span class="n">b</span><span class="o">)</span> <span class="o">{</span>
+<span class="lineno"> 2</span>   <span class="k">if</span> <span class="o">(</span><span class="n">b</span><span class="o">)</span> <span class="o">{</span>
+<span class="lineno"> 3</span>     <span class="n">performVitallyImportantBusinessFunction</span><span class="o">();</span>
+<span class="lineno"> 4</span>     <span class="k">return</span> <span class="s">&quot;OK&quot;</span><span class="o">;</span>
+<span class="lineno"> 5</span>   <span class="o">}</span>
+<span class="lineno"> 6</span> 
+<span class="lineno"> 7</span>   <span class="k">return</span> <span class="s">&quot;FAIL&quot;</span><span class="o">;</span>
+<span class="lineno"> 8</span> <span class="o">}</span>
+<span class="lineno"> 9</span> 
+<span class="lineno">10</span> <span class="nd">@Test</span>
+<span class="lineno">11</span> <span class="kd">public</span> <span class="kt">void</span> <span class="nf">shouldFailWhenGivenFalse</span><span class="o">()</span> <span class="o">{</span>
+<span class="lineno">12</span>   <span class="n">assertEquals</span><span class="o">(</span><span class="s">&quot;FAIL&quot;</span><span class="o">,</span> <span class="n">foo</span><span class="o">(</span><span class="kc">false</span><span class="o">));</span>
+<span class="lineno">13</span> <span class="o">}</span>
+<span class="lineno">14</span> 
+<span class="lineno">15</span> <span class="nd">@Test</span>
+<span class="lineno">16</span> <span class="kd">public</span> <span class="kt">void</span> <span class="nf">shouldBeOkWhenGivenTrue</span><span class="o">()</span> <span class="o">{</span>
+<span class="lineno">17</span>   <span class="n">assertEquals</span><span class="o">(</span><span class="s">&quot;OK&quot;</span><span class="o">,</span> <span class="n">foo</span><span class="o">(</span><span class="kc">true</span><span class="o">));</span>
+<span class="lineno">18</span> <span class="o">}</span>
+</pre></div>
+</section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="pitest.md">pitest.md</a>
+            </aside>
+            
+            <aside class="page_number">
+              2/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: pitest.md -->
+      <div class="slide-wrapper">
+        <div class="slide has_code">
+          <div class="inner">
+            
+            <header><h1>And here?</h1></header>
+            
+            
+            <section><div class="highlight"><pre><span class="lineno"> 1</span> <span class="kd">public</span> <span class="kd">static</span> <span class="n">String</span> <span class="nf">foo</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">)</span> <span class="o">{</span>
+<span class="lineno"> 2</span>   <span class="k">if</span> <span class="o">(</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="o">)</span> <span class="o">{</span>
+<span class="lineno"> 3</span>       <span class="k">return</span> <span class="s">&quot;foo&quot;</span><span class="o">;</span>
+<span class="lineno"> 4</span>   <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+<span class="lineno"> 5</span>       <span class="k">return</span> <span class="s">&quot;bar&quot;</span><span class="o">;</span>
+<span class="lineno"> 6</span>   <span class="o">}</span>
+<span class="lineno"> 7</span> <span class="o">}</span>
+<span class="lineno"> 8</span> 
+<span class="lineno"> 9</span> <span class="nd">@Test</span>
+<span class="lineno">10</span> <span class="kd">public</span> <span class="kt">void</span> <span class="nf">shouldReturnBarWhenGiven1</span><span class="o">()</span> <span class="o">{</span>
+<span class="lineno">11</span>   <span class="n">assertEquals</span><span class="o">(</span><span class="s">&quot;bar&quot;</span><span class="o">,</span> <span class="n">foo</span><span class="o">(</span><span class="mi">1</span><span class="o">));</span>
+<span class="lineno">12</span> <span class="o">}</span>
+<span class="lineno">13</span> 
+<span class="lineno">14</span> <span class="nd">@Test</span>
+<span class="lineno">15</span> <span class="kd">public</span> <span class="kt">void</span> <span class="nf">shouldReturnFooWhenGivenMinus1</span><span class="o">()</span> <span class="o">{</span>
+<span class="lineno">16</span>   <span class="n">assertEquals</span><span class="o">(</span><span class="s">&quot;foo&quot;</span><span class="o">,</span> <span class="n">foo</span><span class="o">(-</span><span class="mi">1</span><span class="o">));</span>
+<span class="lineno">17</span> <span class="o">}</span>
+</pre></div>
+</section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="pitest.md">pitest.md</a>
+            </aside>
+            
+            <aside class="page_number">
+              3/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: pitest.md -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Definition</h1></header>
+            
+            
+            <section><p>Mutation testing is conceptually quite simple.</p>
+<p><em>Faults</em> (or mutations) are automatically seeded into your code, then
+your tests are run. If your tests <em>fail</em> then the mutation is <em>killed</em>, if
+your tests <em>pass</em> then the mutation <em>lived</em>.</p>
+<p>The quality of your tests can be gauged from the percentage of
+mutations <em>killed</em>.</p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="pitest.md">pitest.md</a>
+            </aside>
+            
+            <aside class="page_number">
+              4/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: pitest.md -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Show me the results!</h1></header>
+            
+            
+            <section><p><img alt="osiam" src="pit-osiam.png" /></p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="pitest.md">pitest.md</a>
+            </aside>
+            
+            <aside class="page_number">
+              5/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: pitest.md -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>How long does it take?</h1></header>
+            
+            
+            <section><p>Eaxmple for OSIAM Resource server</p>
+<pre><code>================================================================================
+- Timings
+================================================================================
+&gt; scan classpath : &lt; 1 second
+&gt; coverage and dependency analysis : 10 seconds
+&gt; build mutation tests : &lt; 1 second
+&gt; run mutation analysis : 2 minutes and 27 seconds
+--------------------------------------------------------------------------------
+&gt; Total  : 2 minutes and 38 seconds
+
+================================================================================
+- Statistics
+================================================================================
+&gt;&gt; Generated 1645 mutations Killed 930 (57%)
+&gt;&gt; Ran 5927 tests (3.6 tests per mutation)
+================================================================================
+</code></pre>
+<p>2:27 of 2:48 total!</p></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="pitest.md">pitest.md</a>
+            </aside>
+            
+            <aside class="page_number">
+              6/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: pitest.md -->
+      <div class="slide-wrapper">
+        <div class="slide has_code">
+          <div class="inner">
+            
+            <header><h1>Integrate it!</h1></header>
+            
+            
+            <section><div class="highlight"><pre><span class="lineno"> 1</span> <span class="nt">&lt;plugins&gt;</span>
+<span class="lineno"> 2</span>   <span class="nt">&lt;plugin&gt;</span>
+<span class="lineno"> 3</span>     <span class="nt">&lt;groupId&gt;</span>org.pitest<span class="nt">&lt;/groupId&gt;</span>
+<span class="lineno"> 4</span>     <span class="nt">&lt;artifactId&gt;</span>pitest-maven<span class="nt">&lt;/artifactId&gt;</span>
+<span class="lineno"> 5</span>     <span class="nt">&lt;configuration&gt;</span>
+<span class="lineno"> 6</span>       <span class="nt">&lt;mutationThreshold&gt;</span>50<span class="nt">&lt;/mutationThreshold&gt;</span>
+<span class="lineno"> 7</span>       <span class="nt">&lt;targetClasses&gt;</span>
+<span class="lineno"> 8</span>         <span class="nt">&lt;param&gt;</span>org.osiam.*<span class="nt">&lt;/param&gt;</span>
+<span class="lineno"> 9</span>       <span class="nt">&lt;/targetClasses&gt;</span>
+<span class="lineno">10</span>       <span class="nt">&lt;targetTests&gt;</span>
+<span class="lineno">11</span>         <span class="nt">&lt;param&gt;</span>org.osiam.*<span class="nt">&lt;/param&gt;</span>
+<span class="lineno">12</span>       <span class="nt">&lt;/targetTests&gt;</span>
+<span class="lineno">13</span>     <span class="nt">&lt;/configuration&gt;</span>
+<span class="lineno">14</span>   <span class="nt">&lt;/plugin&gt;</span>
+<span class="lineno">15</span> <span class="nt">&lt;/plugins&gt;</span>
+<span class="lineno">16</span> 
+<span class="lineno">17</span> mvn compile test-compile org.pitest:pitest-maven:mutationCoverage -Dthreads=2
+</pre></div>
+</section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="pitest.md">pitest.md</a>
+            </aside>
+            
+            <aside class="page_number">
+              7/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: pitest.md -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>PIT Highlights</h1></header>
+            
+            
+            <section><ul>
+<li>test coverage first</li>
+<li>incremental analysis</li>
+<li>scm based optimization <a href="http://pitest.org/quickstart/maven/">see Maven Quickstart</a></li>
+<li>plugin mutators</li>
+<li>mutation filters</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="pitest.md">pitest.md</a>
+            </aside>
+            
+            <aside class="page_number">
+              8/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: pitest.md -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Mutators</h1></header>
+            
+            
+            <section><p><a href="http://pitest.org/quickstart/mutators/">Mutators list</a></p>
+<ul>
+<li>Conditionals Boundary Mutator</li>
+<li>Negate Conditionals Mutator</li>
+<li>Remove Conditionals Mutator</li>
+<li>Math Mutator</li>
+<li>Increments Mutator</li>
+<li>Invert Negatives Mutator</li>
+<li>Inline Constant Mutator</li>
+<li>Return Values Mutator</li>
+<li>Void Method Calls Mutator</li>
+<li>Non Void Method Calls Mutator</li>
+<li>Constructor Calls Mutator</li>
+<li>Experimental Inline Constant Mutator</li>
+<li>Experimental Member Variable Mutator</li>
+<li>Experimental Switch Mutator</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="pitest.md">pitest.md</a>
+            </aside>
+            
+            <aside class="page_number">
+              9/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: pitest.md -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>Summing up</h1></header>
+            
+            
+            <section><ul>
+<li>mutation testing is very effective</li>
+<li>...but really slow</li>
+<li>pitest makes it reasonably cheap</li>
+<li>no excuses to not include in your project!</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="pitest.md">pitest.md</a>
+            </aside>
+            
+            <aside class="page_number">
+              10/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+      <!-- slide source: pitest.md -->
+      <div class="slide-wrapper">
+        <div class="slide">
+          <div class="inner">
+            
+            <header><h1>...well</h1></header>
+            
+            
+            <section><ul>
+<li>no excuses maybe besides the lacking CI suitability</li>
+<li>being worked on...</li>
+</ul></section>
+            
+          </div>
+          <div class="presenter_notes">
+            <header><h1>Presenter Notes</h1></header>
+            <section>
+            
+            </section>
+          </div>
+          <footer>
+            
+            <aside class="source">
+              Source: <a href="pitest.md">pitest.md</a>
+            </aside>
+            
+            <aside class="page_number">
+              11/11
+            </aside>
+          </footer>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+  
+  <div id="toc" class="sidebar hidden">
+    <h2>Table of Contents</h2>
+    <table>
+      <caption>Table of Contents</caption>
+      
+      <tr id="toc-row-1">
+        <th><a href="#slide1">Mutation tests with PIT (pitest)</a></th>
+        <td><a href="#slide1">1</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-2">
+        <th><a href="#slide2">What's wrong here?</a></th>
+        <td><a href="#slide2">2</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-3">
+        <th><a href="#slide3">And here?</a></th>
+        <td><a href="#slide3">3</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-4">
+        <th><a href="#slide4">Definition</a></th>
+        <td><a href="#slide4">4</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-5">
+        <th><a href="#slide5">Show me the results!</a></th>
+        <td><a href="#slide5">5</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-6">
+        <th><a href="#slide6">How long does it take?</a></th>
+        <td><a href="#slide6">6</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-7">
+        <th><a href="#slide7">Integrate it!</a></th>
+        <td><a href="#slide7">7</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-8">
+        <th><a href="#slide8">PIT Highlights</a></th>
+        <td><a href="#slide8">8</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-9">
+        <th><a href="#slide9">Mutators</a></th>
+        <td><a href="#slide9">9</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-10">
+        <th><a href="#slide10">Summing up</a></th>
+        <td><a href="#slide10">10</a></td>
+      </tr>
+      
+      
+      <tr id="toc-row-11">
+        <th><a href="#slide11">...well</a></th>
+        <td><a href="#slide11">11</a></td>
+      </tr>
+      
+      
+    </table>
+  </div>
+  
+  <div id="help" class="sidebar hidden">
+    <h2>Help</h2>
+    <table>
+      <caption>Help</caption>
+      <tr>
+        <th>Table of Contents</th>
+        <td>t</td>
+      </tr>
+      <tr>
+        <th>Exposé</th>
+        <td>ESC</td>
+      </tr>
+      <tr>
+        <th>Full screen slides</th>
+        <td>e</td>
+      </tr>
+      <tr>
+        <th>Presenter View</th>
+        <td>p</td>
+      </tr>
+      <tr>
+        <th>Source Files</th>
+        <td>s</td>
+      </tr>
+      <tr>
+        <th>Slide Numbers</th>
+        <td>n</td>
+      </tr>
+      <tr>
+        <th>Toggle screen blanking</th>
+        <td>b</td>
+      </tr>
+      <tr>
+        <th>Show/hide slide context</th>
+        <td>c</td>
+      </tr>
+      <tr>
+        <th>Notes</th>
+        <td>2</td>
+      </tr>
+      <tr>
+        <th>Help</th>
+        <td>h</td>
+      </tr>
+    </table>
+  </div>
+  <script>main()</script>
+</body>
+</html>
